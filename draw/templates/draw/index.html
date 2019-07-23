@@ -27,10 +27,88 @@
 
     // getting the URL (you may want to use for Exercise 3)
     var url = window.location.href;
+    var display = url.split("=")[1];
+    var socket = new WebSocket('wss:sockets--906870065650856.codeanyapp.com/ws/draw');
+// triggered when receiving a message from the server
+socket.onmessage = function(receivedMessage) {
+  var datas =receivedMessage.data.split(";");
+  color_in = datas[1]
+  if (display == "large"){
+  path = new paper.Path(datas[0]);
+  path.strokeColor = color_in;
+  
+  }
+  if (color_in == color[0]){
+    color.shift();
+  }
+  
+	// do something when you receive a message
+};
 
-    // var socket = new WebSocket(
-    //     'wss://<your url here>/ws/draw');
+// use when sending a message to the server
+// to be broadcasted to all clients, please add a delay
+// var t=setTimeout(function(){socket.send("emmm")},1000);
 
 
+// notify console if socket closes unexpectedly
+socket.onclose = function(e) {
+    console.error('Chat socket closed unexpectedly');
+};
+
+var path;
+var color = ["red","green","blue","yellow","orange"]
+var mycolor = null;
+var color_num = 0;
+var detect_interval = 0;
+var clean_interval = 0; 
+function clean(){  
+  var cxt=canvas.getContext("2d");
+  cxt.clearRect(0,0,canvas.width,canvas.height);
+}  
+// Only execute onMouseDrag when the mouse
+// has moved at least 10 points:
+tool.minDistance = 10;
+
+tool.onMouseDown = function(event) {
+    // Create a new path every time the mouse is clicked
+    path = new paper.Path();
+    path.add(event.point);
+    if(mycolor == null){
+      mycolor = color.shift();
+    }
+    path.strokeColor = mycolor;
+}
+
+tool.onMouseDrag = function(event) {
+    // Add a point to the path every time the mouse is dragged
+    path.add(event.point);
+}
+
+tool.onMouseUp = function(event){
+  socket.send(path.pathData + ";" + mycolor)
+}
+window.addEventListener("deviceorientation",(event) => {
+  if (event.gamma > 15 && detect_interval == 0){
+    if (color_num < color.length - 1){
+      color_num = color_num + 1;
+    }
+    else{
+      color_num = 0;
+    }
+    path.strokeColor = color[color_num];
+    detect_interval = 1;
+    setTimeout(function(){detect_interval = 0;},800);
+  }
+},false);
+  
+window.addEventListener("devicemotion",(event)=>{
+  if(event.acceleration.y < -9 || event.acceleration.y > 9 && clean_interval == 0){
+    clean_interval = 1;
+    clean();
+    setTimeout(function(){clean_interval = 0;},800);
+  };
+})
 </script>
 </html>
+
+
