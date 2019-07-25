@@ -4,6 +4,9 @@ import json
 
 def index(request):
     return render(request, 'draw/index.html', {})
+  
+def add(request):
+    return render(request, 'draw/add.html', {})
 
 def room(request, room_name):
     return render(request, 'draw/room.html', {
